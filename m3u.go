@@ -15,7 +15,8 @@ import (
 
 // Playlist is a type that represents an m3u playlist containing 0 or more tracks
 type Playlist struct {
-	Tracks []Track
+	Tracks  []Track
+	Comment string
 }
 
 // A Tag is a simple key/value pair
@@ -49,18 +50,17 @@ func Parse(fileName string) (playlist Playlist, err error) {
 	}
 	defer f.Close()
 
-	onFirstLine := true
 	scanner := bufio.NewScanner(f)
 	tagsRegExp, _ := regexp.Compile("([a-zA-Z0-9-]+?)=\"([^\"]+)\"")
 
+	ln := -1
 	for scanner.Scan() {
+		ln++
 		line := scanner.Text()
-		if onFirstLine && !strings.HasPrefix(line, "#EXTM3U") {
+		if ln == 0 && !strings.HasPrefix(line, "#EXTM3U") {
 			err = errors.New("Invalid m3u file format. Expected #EXTM3U file header")
 			return
 		}
-
-		onFirstLine = false
 
 		if strings.HasPrefix(line, "#EXTINF") {
 			line := strings.Replace(line, "#EXTINF:", "", -1)
@@ -82,6 +82,9 @@ func Parse(fileName string) (playlist Playlist, err error) {
 				track.Tags = append(track.Tags, *tag)
 			}
 			playlist.Tracks = append(playlist.Tracks, *track)
+		} else if strings.HasPrefix(line, "#") && ln == 1 {
+			playlist.Comment = line[1:]
+			continue
 		} else if strings.HasPrefix(line, "#") || line == "" {
 			continue
 		} else if len(playlist.Tracks) == 0 {
@@ -109,6 +112,10 @@ func Marshall(p Playlist) (io.Reader, error) {
 // MarshallInto a *bufio.Writer a Playlist.
 func MarshallInto(p Playlist, into *bufio.Writer) error {
 	into.WriteString("#EXTM3U\n")
+	if p.Comment != "" {
+		into.WriteString(fmt.Sprintf("#%s\n", p.Comment))
+	}
+
 	for _, track := range p.Tracks {
 		into.WriteString("#EXTINF:")
 		into.WriteString(fmt.Sprintf("%d ", track.Length))

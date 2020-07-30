@@ -1,4 +1,5 @@
 #EXTM3U
+#comment
 #EXTINF:1 group-title="Album1", Track 1
 Track1.mp4
 #EXTINF:2 group-title="Album1", Track 2

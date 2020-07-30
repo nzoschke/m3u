@@ -11,6 +11,10 @@ import (
 func TestPlaylist(t *testing.T) {
 	playlist, _ := Parse("testdata/playlist.m3u")
 
+	if playlist.Comment != "comment" {
+		t.Fatalf("Expected comment to be comment but was '%s'", playlist.Comment)
+	}
+
 	if len(playlist.Tracks) != 5 {
 		t.Fatalf("Expected track count to be 5")
 	}
@@ -112,6 +116,10 @@ func TestMarshallPlaylist(t *testing.T) {
 	ioutil.WriteFile("/tmp/test_m3u_marshalling.m3u", b.Bytes(), os.ModePerm)
 
 	playlist, _ = Parse("/tmp/test_m3u_marshalling.m3u")
+
+	if playlist.Comment != "comment" {
+		t.Fatalf("Expected comment to be comment but was '%s'", playlist.Comment)
+	}
 
 	if len(playlist.Tracks) != 5 {
 		t.Fatalf("Expected track count to be 5")
